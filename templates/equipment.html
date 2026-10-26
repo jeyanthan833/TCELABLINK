@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}TCELABLINK | {{ item.name }}{% endblock %}
+
+{% block content %}
+<div class="head">
+  <div>
+    <small>EQUIPMENT RECORD</small>
+    <h1>{{ item.name }}</h1>
+    <p>{{ item.category }} · {{ item.location }}</p>
+  </div>
+  <a class="btn" href="{{ url_for('student') }}">Back to Equipment</a>
+</div>
+
+<div class="two">
+  <!-- Left column: Big photo with graceful CSS placeholder fallback -->
+  <section class="card equip-photo-card center">
+    <div class="equip-media-wrapper">
+      <img src="{{ url_for('static', filename='images/equip/' ~ item.id ~ '.jpg') }}" alt="{{ item.name }}"
+        class="equip-photo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="equip-photo-placeholder" style="display:none;">
+        <div class="placeholder-icon">🔬</div>
+        <strong>{{ item.name }}</strong>
+        <small>{{ item.id }} · {{ item.category }}</small>
+      </div>
+    </div>
+    <div class="equip-badge-row" style="margin-top:16px;">
+      <span class="pill {{ item.status|lower|replace(' ', '-') }}">{{ item.status }}</span>
+      <span class="pill" style="background:#f2f4f7;color:var(--ink);">Condition: {{ item.condition }}</span>
+    </div>
+  </section>
+
+  <!-- Right column: Equipment details + specifications -->
+  <section class="card">
+    <div class="row">
+      <span class="mini-label">TECHNICAL SPECIFICATIONS</span>
+      <code>{{ item.id }}</code>
+    </div>
+    <h2 style="margin:10px 0 16px;">Specifications & Metadata</h2>
+
+    <div class="availability-highlight" style="background:#ecfdf3;border:1px solid #a6f4c5;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:15px;font-weight:700;color:#027a48;">
+      Availability: {{ item.available_qty }} of {{ item.total_qty }} units
+    </div>
+
+    <div class="rows">
+      <div>Equipment ID <b>{{ item.id }}</b></div>
+      <div>Availability <b>{{ item.available_qty }} of {{ item.total_qty }} units</b></div>
+      {% if item.model %}<div>Model Number <b>{{ item.model }}</b></div>{% endif %}
+      <div>Category <b>{{ item.category }}</b></div>
+      <div>Location <b>{{ item.location }}</b></div>
+      {% if item.vendor %}<div>Manufacturer / Vendor <b>{{ item.vendor }}</b></div>{% endif %}
+      {% if item.purchase_date %}<div>Purchase Date <b>{{ item.purchase_date }}</b></div>{% endif %}
+      {% if item.cost is defined and item.cost %}<div>Estimated Value <b>₹{{ "{:,}".format(item.cost) }}</b></div>{%
+      endif %}
+      {% if item.student %}<div>Currently Issued To <b>{{ item.student }}</b></div>{% endif %}
+      {% if item.due %}<div>Return Due Date <b>{{ item.due }}</b></div>{% endif %}
+
+      <!-- Key-value dynamic specs dictionary -->
+      {% if item.specs %}
+      {% for spec_key, spec_val in item.specs.items() %}
+      {% if spec_val %}
+      <div>{{ spec_key }} <b>{{ spec_val }}</b></div>
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+    </div>
+
+    <div style="margin-top:24px;">
+      {% if item.available_qty > 0 and item.status != 'Under Maintenance' and item.status != 'Defective' %}
+      {% if session.get('user') and session['user']['role'] == 'faculty' %}
+      <div class="approval">
+        <b>Faculty View</b>
+        <span>Equipment is currently available. Student requests are managed by laboratory staff.</span>
+      </div>
+      {% else %}
+      <a class="btn primary full" href="{{ url_for('borrow', eid=item.id) }}">Request Equipment</a>
+      {% endif %}
+      {% elif item.available_qty == 0 or item.status == 'All Issued' %}
+      <button class="btn full" disabled style="cursor:not-allowed;background:#fee4e2;color:#d92d20;border:1px solid #fecdca;font-weight:700;padding:10px 16px;">All units issued</button>
+      {% else %}
+      <p class="warn">This equipment is currently <b>{{ item.status|lower }}</b> and cannot be requested.</p>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+<!-- Full Description block -->
+<section class="card" style="margin-top:24px;">
+  <h2>Equipment Overview & Purpose</h2>
+  <p style="font-size:15px;line-height:1.65;color:var(--ink);margin:10px 0 0;">
+    {{ item.description or 'Standard laboratory apparatus used for academic and research experiments.' }}
+  </p>
+</section>
+
+<!-- Full Status History table -->
+<section class="card" style="margin-top:24px;">
+  <div class="row">
+    <h2>Lifecycle & Status History</h2>
+    <small class="muted">Digital Audit Log</small>
+  </div>
+  {% set item_history = history|selectattr('equipment_id', 'equalto', item.id)|list %}
+  {% if item_history %}
+  <div class="table" style="margin-top:14px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Action</th>
+          <th>Details & Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in item_history|reverse %}
+        <tr>
+          <td>{{ h.time }}</td>
+          <td><span class="pill available" style="font-size:11px;">{{ h.action }}</span></td>
+          <td>{{ h.detail or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted" style="margin-top:14px;">No history recorded yet for this equipment record.</p>
+  {% endif %}
+</section>
+{% endblock %}

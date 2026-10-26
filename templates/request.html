@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}TCELABLINK | Request {{ item.name }}{% endblock %}
+
+{% block content %}
+<div class="narrow">
+  <div class="head">
+    <div>
+      <small>BORROW REQUEST</small>
+      <h1>Request {{ item.name }}</h1>
+      <p>{{ item.id }} · {{ item.category }} · {{ item.location }}</p>
+    </div>
+    <a class="btn" href="{{ url_for('details', eid=item.id) }}">Cancel</a>
+  </div>
+
+  <form class="card form" method="post" action="{{ url_for('borrow', eid=item.id) }}">
+    <label>
+      Student ID / Roll Number
+      <input name="student_id" value="{{ session.get('user', {}).get('username', '') }}"
+        placeholder="Enter your student roll number" required>
+    </label>
+
+    <label>
+      Borrow Purpose
+      <select name="purpose" required>
+        <option value="Academic Project">Academic Project</option>
+        <option value="Laboratory Work">Laboratory Work</option>
+        <option value="Course Assignment">Course Assignment</option>
+        <option value="Research & Prototyping">Research & Prototyping</option>
+      </select>
+    </label>
+
+    <label>
+      Expected Return Date
+      <input type="date" name="due_date" required>
+    </label>
+
+    <div class="approval">
+      <b>Approval workflow</b>
+      <span>Follow the department lab-in-charge procedure. Submitted requests are queued on the Lab Staff Dashboard for
+        technician approval and issue handover.</span>
+    </div>
+
+    <button type="submit" class="btn primary full">Submit Borrow Request</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}TCELABLINK | Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="head">
+  <div>
+    <small>LAB STAFF DASHBOARD</small>
+    <h1>Equipment inventory & control</h1>
+    <p>Monitor equipment status, issue items to students, log inspections, and print technician QR tags.</p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    {% if current_role == 'faculty' %}
+    <span class="pill" style="background:#eef2f6;color:var(--ink);padding:8px 12px;">Mode: Faculty (Read-Only)</span>
+    {% elif current_role == 'technician' %}
+    <span class="pill available" style="padding:8px 12px;">Mode: Technician (Full Control)</span>
+    {% endif %}
+    <a class="btn" href="{{ url_for('student') }}">Student View</a>
+  </div>
+</div>
+
+<section class="stats">
+  <div><b>{{ equipment|selectattr('status', 'equalto', 'Available')|list|length }}</b><span>Available</span></div>
+  <div><b>{{ equipment|selectattr('status', 'equalto', 'Issued')|list|length }}</b><span>Issued</span></div>
+  <div><b>{{ equipment|selectattr('status', 'equalto', 'Overdue')|list|length }}</b><span>Overdue</span></div>
+  <div><b>{{ equipment|selectattr('status', 'equalto', 'Under Maintenance')|list|length }}</b><span>Maintenance</span>
+  </div>
+</section>
+
+<!-- Equipment Control Table with Live Search and Status Filter -->
+<section class="card table">
+  <div class="row" style="margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+    <h2>Equipment status & actions</h2>
+    <div class="admin-filter-bar">
+      <input type="text" id="admin-search" placeholder="Search by ID or name..." oninput="filterAdminTable()"
+        style="padding:8px 12px;font-size:14px;width:220px;">
+
+      <select id="admin-status-filter" onchange="filterAdminTable()" style="padding:8px 12px;font-size:14px;">
+        <option value="all">All Statuses</option>
+        <option value="available">Available</option>
+        <option value="all issued">All Issued</option>
+        <option value="issued">Issued</option>
+        <option value="overdue">Overdue</option>
+        <option value="defective">Defective</option>
+        <option value="under maintenance">Under Maintenance</option>
+      </select>
+    </div>
+  </div>
+
+  <table id="admin-table">
+    <thead>
+      <tr>
+        <th>Equipment</th>
+        <th>Units</th>
+        <th>Student / Due</th>
+        <th>Status</th>
+        <th>QR Management</th>
+        <th>Actions {% if current_role == 'faculty' %}<small style="color:var(--muted);">(Disabled for
+            Faculty)</small>{% endif %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in equipment %}
+      <tr class="admin-eq-row {% if e.status == 'Overdue' %}row-overdue{% endif %}" data-name="{{ e.name|lower }}"
+        data-id="{{ e.id|lower }}" data-status="{{ e.status|lower }}">
+        <td>
+          <a href="{{ url_for('details', eid=e.id) }}" style="text-decoration:none;color:var(--ink);">
+            <b>{{ e.name }}</b>
+          </a>
+          <small>{{ e.id }} · {{ e.location }}</small>
+        </td>
+        <td>
+          <b>{{ e.available_qty }} / {{ e.total_qty }}</b>
+        </td>
+        <td>
+          {% if e.student %}
+          <b>{{ e.student }}</b>
+          <small>Due: {{ e.due or '—' }}</small>
+          {% else %}
+          <span class="muted">—</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="pill {{ e.status|lower|replace(' ', '-') }}">{{ e.status }}</span>
+        </td>
+        <td>
+          <div class="qr-action-cell">
+            <a class="btn small" href="{{ url_for('admin_qr', eid=e.id) }}" target="_blank"
+              title="Open printable physical QR label">
+              🖨️ Print QR
+            </a>
+            <a class="text-link" href="{{ url_for('qr_image', eid=e.id) }}" target="_blank"
+              style="font-size:12px;margin-left:6px;">
+              View QR
+            </a>
+          </div>
+        </td>
+        <td>
+          {% if current_role == 'faculty' %}
+          <span class="pill read-only-pill">Read-only</span>
+          {% else %}
+          {% if e.status == 'All Issued' %}
+          <form class="inline" method="post" action="{{ url_for('ret', eid=e.id) }}">
+            <button type="submit" class="small"
+              style="background:#ecfdf3;border-color:#a6f4c5;color:var(--green);">Confirm Return</button>
+          </form>
+          {% elif e.status in ['Issued', 'Overdue'] %}
+          <form class="inline" method="post" action="{{ url_for('ret', eid=e.id) }}">
+            <button type="submit" class="small"
+              style="background:#ecfdf3;border-color:#a6f4c5;color:var(--green);">Confirm Return</button>
+          </form>
+          {% if e.available_qty > 0 %}
+          <form class="inline" method="post" action="{{ url_for('issue', eid=e.id) }}">
+            <input name="student_id" placeholder="Student ID" required style="width:110px;">
+            <input type="date" name="due_date" required style="width:130px;">
+            <button type="submit" class="small primary">Issue</button>
+          </form>
+          {% endif %}
+          {% elif e.status == 'Available' %}
+          <form class="inline" method="post" action="{{ url_for('issue', eid=e.id) }}">
+            <input name="student_id" placeholder="Student ID" required style="width:110px;">
+            <input type="date" name="due_date" required style="width:130px;">
+            <button type="submit" class="small primary">Issue</button>
+          </form>
+          {% if e.available_qty < e.total_qty %}
+          <form class="inline" method="post" action="{{ url_for('ret', eid=e.id) }}">
+            <button type="submit" class="small"
+              style="background:#ecfdf3;border-color:#a6f4c5;color:var(--green);">Return</button>
+          </form>
+          {% endif %}
+          <form class="inline" method="post" action="{{ url_for('mark_defective', eid=e.id) }}">
+            <button type="submit" class="small" style="color:var(--red);">Defect</button>
+          </form>
+          <form class="inline" method="post" action="{{ url_for('mark_maintenance', eid=e.id) }}">
+            <button type="submit" class="small" style="color:var(--orange);">Service</button>
+          </form>
+          {% else %}
+          <form class="inline" method="post" action="{{ url_for('restore', eid=e.id) }}">
+            <button type="submit" class="small primary">Restore to Available</button>
+          </form>
+          {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      <tr id="admin-empty-row" style="display:none;">
+        <td colspan="6" class="center muted" style="padding:28px;">
+          No laboratory equipment matches the active filter or search criteria.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Student Borrow Requests Queue -->
+<section class="card" style="margin-top:24px;">
+  <h2>Student borrow requests queue</h2>
+  {% if requests %}
+  <div class="table" style="margin-top:12px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Equipment</th>
+          <th>Student</th>
+          <th>Purpose</th>
+          <th>Requested Due</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in requests %}
+        <tr>
+          <td><b>{{ r.equipment }}</b><small>{{ r.equipment_id }}</small></td>
+          <td><b>{{ r.student }}</b></td>
+          <td>{{ r.purpose }}</td>
+          <td>{{ r.due }}</td>
+          <td>
+            <span
+              class="pill {% if r.status == 'Pending' %}issued{% elif r.status == 'Issued' %}available{% else %}defective{% endif %}">
+              {{ r.status }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted" style="margin-top:10px;">No borrow requests currently pending.</p>
+  {% endif %}
+</section>
+
+<!-- Recent Activity Audit Feed (Last 10 events across all equipment) -->
+<section class="card" style="margin-top:24px;">
+  <div class="row">
+    <h2>Recent activity audit feed</h2>
+    <small class="muted">Last 10 Logged Events</small>
+  </div>
+  {% if recent_history %}
+  <div class="table" style="margin-top:12px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Item ID</th>
+          <th>Action</th>
+          <th>Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in recent_history %}
+        <tr>
+          <td><small>{{ h.time }}</small></td>
+          <td><code>{{ h.equipment_id }}</code></td>
+          <td><span class="pill available" style="font-size:11px;">{{ h.action }}</span></td>
+          <td>{{ h.detail or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted" style="margin-top:10px;">No activity logged yet.</p>
+  {% endif %}
+</section>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

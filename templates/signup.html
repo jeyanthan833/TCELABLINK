@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}TCELABLINK | Register Account{% endblock %}
+
+{% block content %}
+<div class="narrow">
+  <div class="head">
+    <div>
+      <small>CREATE ACCOUNT</small>
+      <h1>Join TCELABLINK</h1>
+      <p>Register as a student or laboratory technician.</p>
+    </div>
+  </div>
+
+  <form class="card form" method="post" action="{{ url_for('signup') }}">
+    <label>
+      Full Name
+      <input type="text" name="name" placeholder="e.g. Arun Kumar" required>
+    </label>
+
+    <label>
+      Institutional Email
+      <input type="email" name="email" placeholder="e.g. arun@college.edu" required>
+    </label>
+
+    <label>
+      Username / Roll Number
+      <input type="text" name="username" placeholder="e.g. 23CSE045 or arun" required>
+    </label>
+
+    <label>
+      Password
+      <input type="password" name="password" placeholder="Create a password" required minlength="4">
+    </label>
+
+    <label>
+      Account Role
+      <select name="role" required>
+        <option value="student">Student (Equipment browser & borrow requests)</option>
+        <option value="technician">Lab Technician (Manage equipment, issues & returns)</option>
+      </select>
+    </label>
+
+    <div class="approval" style="margin-top:6px;">
+      <b>Role note</b>
+      <span>Faculty accounts have institutional read-only access and are provisioned directly by the lab
+        administrator.</span>
+    </div>
+
+    <button type="submit" class="btn primary full">Create Account</button>
+    <p class="muted center" style="margin-top:14px;font-size:14px;">
+      Already have an account? <a href="{{ url_for('login') }}" style="color:var(--blue);font-weight:700;">Sign in
+        here</a>
+    </p>
+  </form>
+</div>
+{% endblock %}

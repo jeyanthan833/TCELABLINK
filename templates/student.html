@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}TCELABLINK | Student Portal{% endblock %}
+
+{% block content %}
+<div class="head">
+  <div>
+    <small>STUDENT PORTAL</small>
+    <h1>Find laboratory equipment</h1>
+    <p>Browse available apparatus, view detailed specifications, and request items.</p>
+  </div>
+  <a class="btn" href="{{ url_for('index') }}">Home</a>
+</div>
+
+<div class="toolbar">
+  <input id="search" placeholder="Search by equipment name, ID, or category..." oninput="filterCards()">
+  <span class="toolbar-stats" id="search-counter">{{ equipment|length }} items</span>
+</div>
+
+<div class="grid" id="equipment">
+  {% for e in equipment %}
+  <article class="card eq" data-name="{{ e.name|lower }} {{ e.id|lower }} {{ e.category|lower }}">
+    <div class="card-thumb-wrapper">
+      <img src="{{ url_for('static', filename='images/equip/' ~ e.id ~ '.jpg') }}" alt="{{ e.name }}"
+        class="card-thumb-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="card-thumb-placeholder" style="display:none;">
+        <span>🔬</span>
+        <small>{{ e.id }}</small>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px;">
+      <span class="pill {{ e.status|lower|replace(' ', '-') }}">{{ e.status }}</span>
+      <code>{{ e.id }}</code>
+    </div>
+
+    <h3>{{ e.name }}</h3>
+    <p class="equip-avail-text" style="font-size:13px;font-weight:600;margin:2px 0 6px;color:var(--ink);">Available: {{ e.available_qty }} of {{ e.total_qty }}</p>
+    <p>{{ e.category }} · {{ e.location }}</p>
+
+    <div class="card-meta-row">
+      <span class="card-cost">₹{{ "{:,}".format(e.cost) if e.cost else '—' }}</span>
+      <span class="card-cond">Cond: {{ e.condition }}</span>
+    </div>
+
+    <div class="card-actions" style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
+      {% if e.available_qty == 0 %}
+      <button class="pill all-issued" disabled style="width:100%;text-align:center;padding:7px 12px;font-size:12px;cursor:not-allowed;border:1px solid #fecdca;background:#fee4e2;color:#d92d20;font-weight:700;">All units issued</button>
+      {% else %}
+      <a class="btn primary small" href="{{ url_for('borrow', eid=e.id) }}" style="text-align:center;">Request</a>
+      {% endif %}
+      <a class="card-action-link" href="{{ url_for('details', eid=e.id) }}">View equipment details →</a>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+
+<!-- Friendly Empty State when search returns no match -->
+<div id="no-search-results" class="card center empty-search-state" style="display:none;margin-top:20px;">
+  <p style="font-size:32px;margin:0 0 10px;">🔍</p>
+  <h3>No equipment found</h3>
+  <p class="muted">No laboratory apparatus matched your search query. Try checking your spelling or clearing filters.
+  </p>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

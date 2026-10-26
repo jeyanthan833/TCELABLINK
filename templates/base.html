@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}TCELABLINK{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+  <header>
+    <a class="brand" href="{{ url_for('index') }}"><b>T</b> TCELABLINK</a>
+    <nav>
+      <a href="{{ url_for('index') }}">Home</a>
+      {% if session.get('user') %}
+      {% if session['user']['role'] == 'student' %}
+      <a href="{{ url_for('student') }}">Student Portal</a>
+      {% elif session['user']['role'] in ['technician', 'faculty'] %}
+      <a href="{{ url_for('student') }}">Equipment</a>
+      <a href="{{ url_for('admin') }}">Lab Staff</a>
+      {% endif %}
+      <div class="user-session">
+        <span class="user-name">{{ session['user']['name'] }}</span>
+        <span class="role-badge role-{{ session['user']['role'] }}">{{ session['user']['role']|capitalize }}</span>
+        <a class="nav-logout" href="{{ url_for('logout') }}">Logout</a>
+      </div>
+      {% else %}
+      <a href="{{ url_for('login') }}">Login</a>
+      <a class="btn primary small" href="{{ url_for('signup') }}">Sign up</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+      <div class="flash-alert flash-{{ category }}">
+        <span>{{ message }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>TCELABLINK · QR-Based Laboratory Equipment Management & Tracking System</p>
+    <small>Prototype v2 · Design Thinking Project</small>
+  </footer>
+</body>
+
+</html>

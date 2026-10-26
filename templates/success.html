@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block title %}TCELABLINK | Submitted{% endblock %}{% block content %}<div
+    class="success card">
+    <div class="check">✓</div><small>REQUEST SUBMITTED</small>
+    <h1>Your request is recorded.</h1>
+    <p>{{item.name}} · Student {{student_id}}</p>
+    <p class="muted">The request now appears in the Lab Staff Dashboard.</p><a class="btn primary"
+        href="{{url_for('admin')}}">Open Staff Dashboard</a>
+</div>{% endblock %}

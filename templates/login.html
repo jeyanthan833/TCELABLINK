@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}TCELABLINK | Sign In{% endblock %}
+
+{% block content %}
+<div class="narrow">
+  <div class="head">
+    <div>
+      <small>AUTHENTICATION</small>
+      <h1>Sign in to TCELABLINK</h1>
+      <p>Access equipment reservations and laboratory management.</p>
+    </div>
+  </div>
+
+  <form class="card form" method="post" action="{{ url_for('login', next=request.args.get('next')) }}">
+    <label>
+      Username
+      <input type="text" name="username" placeholder="e.g. student or tech" required autofocus>
+    </label>
+
+    <label>
+      Password
+      <input type="password" name="password" placeholder="Enter your password" required>
+    </label>
+
+    <button type="submit" class="btn primary full">Sign In</button>
+    <p class="muted center" style="margin-top:14px;font-size:14px;">
+      Don't have an account? <a href="{{ url_for('signup') }}" style="color:var(--blue);font-weight:700;">Sign up
+        here</a>
+    </p>
+  </form>
+
+  <div class="card demo-credentials-card" style="margin-top:24px;">
+    <div class="row">
+      <small style="color:var(--blue);font-weight:800;letter-spacing:1px;">DEMO CREDENTIALS</small>
+      <span class="pill available">Reviewer Quick-Access</span>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin:8px 0 14px;">
+      Use these pre-configured test credentials to evaluate the role-based features during the review demo:
+    </p>
+    <div class="demo-grid">
+      <div class="demo-item">
+        <strong>Student</strong>
+        <code>student / student123</code>
+        <small>Browse items & submit borrow requests</small>
+      </div>
+      <div class="demo-item">
+        <strong>Technician</strong>
+        <code>tech / tech123</code>
+        <small>Full access: issue, return, defects, QR tags</small>
+      </div>
+      <div class="demo-item">
+        <strong>Faculty</strong>
+        <code>faculty / faculty123</code>
+        <small>Read-only monitoring of staff dashboard</small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
